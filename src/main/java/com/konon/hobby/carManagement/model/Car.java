@@ -11,7 +11,6 @@ import javax.persistence.Id;
 public class Car {
 
     public Car() {
-
     }
 
     @Id
