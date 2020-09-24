@@ -13,11 +13,15 @@ public class Car {
     public Car() {
     }
 
+    public Car(String number) {
+        this.number = number;
+    }
+
     @Id
     @GeneratedValue
-    private int id;
+    private long id;
 
     private String number;
-    private String name;
-    private String description;
+//    private String name;
+//    private String description;
 }
