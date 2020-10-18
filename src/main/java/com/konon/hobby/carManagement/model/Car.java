@@ -10,13 +10,6 @@ import javax.persistence.Id;
 @Data
 public class Car {
 
-    public Car() {
-    }
-
-    public Car(String number) {
-        this.number = number;
-    }
-
     @Id
     @GeneratedValue
     private long id;
@@ -24,4 +17,12 @@ public class Car {
     private String number;
 //    private String name;
 //    private String description;
+
+    public Car() {
+    }
+
+    public Car(String number) {
+        this.number = number;
+    }
+
 }
