@@ -12,17 +12,17 @@ public class Car {
 
     @Id
     @GeneratedValue
-    private long id;
+    private Long carId;
 
-    private String number;
+    private String carNumber;
 //    private String name;
 //    private String description;
 
     public Car() {
     }
 
-    public Car(String number) {
-        this.number = number;
+    public Car(String carNumber) {
+        this.carNumber = carNumber;
     }
 
 }
