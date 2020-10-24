@@ -37,23 +37,38 @@ public class CarController {
         return new ResponseEntity("CAR with ID = " + id + " NOT FOUND", HttpStatus.NOT_FOUND);
     }
 
-    @PostMapping()
+    @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity createCar(@RequestBody Car car) {
 
-        return new ResponseEntity(carRepository.save(car).getCarId(), HttpStatus.OK);
+        Optional<Car> carInDatabase = carRepository.findByCarNumber(car.getCarNumber());
+
+        if(!carInDatabase.isPresent())
+            return new ResponseEntity(carRepository.save(car).getCarId(), HttpStatus.CREATED);
+
+        return new ResponseEntity("CAR with number = " + car.getCarNumber() + " IS EXIST", HttpStatus.CONFLICT);
     }
 
-    @GetMapping("/delete/{id}")
+    @GetMapping(value = "/delete/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity deleteCar(@PathVariable long id) {
-        carRepository.deleteById(id);
-        return new ResponseEntity(carRepository.existsById(id), HttpStatus.OK);
+        if(carRepository.existsById(id)) {
+            carRepository.deleteById(id);
+
+            return new ResponseEntity("CAR with ID = " + id + " DELETED", HttpStatus.OK);
+        }
+
+        return new ResponseEntity("CAR with ID = " + id + " NOT EXIST", HttpStatus.NOT_FOUND);
     }
 
 
-    @PostMapping("/{id}")
+    @PostMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity updateCar(@PathVariable long id, @RequestBody Car car) {
-        car.setCarId(id);
-        carRepository.save(car);
-        return new ResponseEntity(car.getCarId(), HttpStatus.OK);
+        if(carRepository.existsById(id))
+        {
+            car.setCarId(id);
+            carRepository.save(car);
+            return new ResponseEntity(car.getCarId(), HttpStatus.OK);
+        }
+
+        return new ResponseEntity("Car with ID " + id + " NOT FOUND", HttpStatus.NOT_FOUND);
     }
 }

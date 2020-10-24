@@ -85,6 +85,7 @@ class CarControllerTest {
     void shouldCreateCar() throws Exception {
         Car testCar = createTestCar(3L);
 
+        when(carRepository.findByCarNumber(testCar.getCarNumber())).thenReturn(Optional.empty());
         when(carRepository.save(testCar)).thenReturn(testCar);
 
         mockMvc.perform(
@@ -92,21 +93,37 @@ class CarControllerTest {
                         .content(objectMapper.writeValueAsString(testCar))
                         .contentType(MediaType.APPLICATION_JSON)
         ).andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.status().isCreated())
                 .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(MockMvcResultMatchers.content().string(testCar.getCarId().toString()));
 
+        verify(carRepository).findByCarNumber(testCar.getCarNumber());
         verify(carRepository).save(testCar);
     }
 
-    void shouldGetCarIsExist() {
-        //Авто с такими параметрами уже существует.
+    @Test
+    void shouldGetCarIsExist() throws Exception {
+        Car testCar = createTestCar(3L);
+
+        when(carRepository.findByCarNumber(testCar.getCarNumber())).thenReturn(Optional.of(testCar));
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.post("/car")
+                        .content(objectMapper.writeValueAsString(testCar))
+                        .contentType(MediaType.APPLICATION_JSON)
+        ).andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().isConflict())
+                .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.content()
+                        .string("CAR with number = " + testCar.getCarNumber() + " IS EXIST"));
+
+        verify(carRepository).findByCarNumber(testCar.getCarNumber());
     }
 
     @Test
     void shouldDeleteCar() throws Exception {
         Long deleteCarId = 3L;
-        Boolean existCar = false;
+        Boolean existCar = true;
 
         when(carRepository.existsById(deleteCarId)).thenReturn(existCar);
 
@@ -116,20 +133,33 @@ class CarControllerTest {
         ).andDo(MockMvcResultHandlers.print())
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(MockMvcResultMatchers.content().string(existCar.toString()));
+                .andExpect(MockMvcResultMatchers.content().string("CAR with ID = " + deleteCarId + " DELETED"));
 
         verify(carRepository).deleteById(deleteCarId);
         verify(carRepository).existsById(deleteCarId);
     }
 
-    void shouldNotDeleteCar() {
-        //Нельзя удалить то, чего нет.
+    @Test
+    void shouldNotDeleteCar() throws Exception {
+        Long deleteCarId = 3L;
+        Boolean existCar = false;
+
+        when(carRepository.existsById(deleteCarId)).thenReturn(existCar);
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.get("/car/delete/" + deleteCarId)
+                        .contentType(MediaType.APPLICATION_JSON)
+        ).andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().isNotFound())
+                .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.content().string("CAR with ID = " + deleteCarId + " NOT EXIST"));
     }
 
     @Test
     void shouldUpdateCar() throws Exception {
         Car testCar = createTestCar(4L);
 
+        when(carRepository.existsById(testCar.getCarId())).thenReturn(true);
         when(carRepository.save(testCar)).thenReturn(testCar);
 
         mockMvc.perform(
@@ -141,12 +171,28 @@ class CarControllerTest {
                 .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(MockMvcResultMatchers.content().string(testCar.getCarId().toString()));
 
+        verify(carRepository).existsById(testCar.getCarId());
         verify(carRepository).save(testCar);
 
     }
 
-    void shouldNotUpdateCar() {
-        //Нельзя обновить несущестующий автомобиль.
+    @Test
+    void shouldNotUpdateCar() throws Exception {
+        Car testCar = createTestCar(4L);
+
+        when(carRepository.existsById(testCar.getCarId())).thenReturn(false);
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.post("/car/" + testCar.getCarId())
+                        .content(objectMapper.writeValueAsString(testCar))
+                        .contentType(MediaType.APPLICATION_JSON)
+        ).andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().isNotFound())
+                .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.content().string("Car with ID " + testCar.getCarId() + " NOT FOUND"));
+
+
+        verify(carRepository).existsById(testCar.getCarId());
     }
 
     private Car createTestCar(Long index)
